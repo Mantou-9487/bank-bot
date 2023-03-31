@@ -72,14 +72,18 @@ class Bank(commands.Cog):
     Mode = commands.option_enum({"開發模式":"dev","一般模式":"normal"})
     @commands.slash_command(name="change",description="切換開發/正式模式")
     async def change_mode(self, interaction: ApplicationCommandInteraction,mode:Mode):
-        if Mode.current_mode == "normal":
-            Mode.current_mode = "developer"
-            await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-            await self.bot.change_presence(activity=Game(name="正在開發模式中..可能無法使用一些服務"),status=Status.dnd)
+        if interaction.user.id == 549056425943629825:
+            if Mode.current_mode == "normal":
+                Mode.current_mode = "developer"
+                await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
+                await self.bot.change_presence(activity=Game(name="正在開發模式中..可能無法使用一些服務"),status=Status.dnd)
+            else:
+                Mode.current_mode = "normal"
+                await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
+                await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
         else:
-            Mode.current_mode = "normal"
-            await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-            await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
+            embed = disnake.Embed(title="❌ | 你無權執行此指令!",colour=disnake.Colour.red())
+            await interaction.response.send_message(embed=embed,ephemeral=True)
         
 
     @commands.slash_command(name=Localized(data={Locale.zh_TW: "產生合約"}), description="透過此指令來一鍵定存!")

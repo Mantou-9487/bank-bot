@@ -1,2 +1,3 @@
 class Mode:
-    current_mode = "normal"
+    def __init__(self) -> None:
+        self.current_mode = "normal"
