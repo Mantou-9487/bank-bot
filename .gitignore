@@ -1,0 +1,8 @@
+Auto_Push.py
+adventure.py
+*.txt
+.json
+.env
+.code-workspace
+.yml
+.jar
