@@ -73,14 +73,25 @@ class Bank(commands.Cog):
     @commands.slash_command(name="change",description="切換開發/正式模式")
     async def change_mode(self, interaction: ApplicationCommandInteraction,mode:Mode):
         if interaction.user.id == 549056425943629825:
-            if Mode.current_mode == "normal":
-                Mode.current_mode = "developer"
-                await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-                await self.bot.change_presence(activity=Game(name="正在開發模式中..可能無法使用一些服務"),status=Status.dnd)
-            else:
-                Mode.current_mode = "normal"
-                await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-                await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
+            try:
+                if Mode.current_mode == "normal":
+                    Mode.current_mode = "developer"
+                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
+                    await self.bot.change_presence(activity=Game(name="正在開發模式中..可能無法使用一些服務"),status=Status.dnd)
+                else:
+                    Mode.current_mode = "normal"
+                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
+                    await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
+            except AttributeError:
+                Mode.init("normal")
+                if Mode.current_mode == "normal":
+                    Mode.current_mode = "developer"
+                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
+                    await self.bot.change_presence(activity=Game(name="正在開發模式中..可能無法使用一些服務"),status=Status.dnd)
+                else:
+                    Mode.current_mode = "normal"
+                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
+                    await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
         else:
             embed = disnake.Embed(title="❌ | 你無權執行此指令!",colour=disnake.Colour.red())
             await interaction.response.send_message(embed=embed,ephemeral=True)

@@ -1,3 +1,7 @@
 class Mode:
-    def __init__(self) -> None:
-        self.current_mode = "normal"
+    current_mode = None   
+
+    @classmethod
+    def init(cls, mode):
+        cls.current_mode = mode
+  
