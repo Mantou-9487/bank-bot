@@ -9,7 +9,7 @@ from disnake import Webhook
 from disnake.ext import commands,tasks
 from disnake.ext.commands import Param
 from disnake import ApplicationCommandInteraction,Localized,Locale,Member,Option,OptionType,Game,Embed,Colour,MessageInteraction,Status
-from core.functions import generate,search,remove,write,change
+from core.functions import generate,search,remove,write
 from typing import Optional
 from variables import Mode
 
