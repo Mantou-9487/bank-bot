@@ -6,3 +6,7 @@ adventure.py
 .code-workspace
 .yml
 .jar
+testcogs/
+testcore/
+test.py
+.env

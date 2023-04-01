@@ -3,6 +3,9 @@ import json
 import asyncio
 import os
 import aiohttp
+import glob
+import locale
+import pytz
 
 from datetime import timedelta, date,datetime
 from disnake import Webhook
@@ -11,7 +14,8 @@ from disnake.ext.commands import Param
 from disnake import ApplicationCommandInteraction,Localized,Locale,Member,Option,OptionType,Game,Embed,Colour,MessageInteraction,Status
 from core.functions import generate,search,remove,write
 from typing import Optional
-from variables import Mode
+
+locale.setlocale(locale.LC_TIME, 'zh_TW.UTF-8')
 
 class Mode:
     def __init__(self):
@@ -35,7 +39,40 @@ class Menu(disnake.ui.View):
 class Bank(commands.Cog):
     def __init__(self, bot:commands.Bot):
         self.bot = bot 
+        self.user_file_paths = glob.glob(f'database/*.json')
         super().__init__()
+
+    @tasks.loop(minutes=1)
+    async def check_date(self):
+        await self.bot.wait_until_ready()
+        now = datetime.now(tz=pytz.timezone("Asia/Taipei"))
+        for file_path in self.user_file_paths:
+            file_name = os.path.basename(file_path).split('.')[0]
+            with open(file_path) as f:
+                data = json.load(f)
+        try:
+            join_date_str = data[0]['time']  # 获取日期字符串
+            join_date_obj = datetime.strptime(join_date_str, '%Y-%m-%d')
+            if now.timestamp() >= join_date_obj.timestamp():
+                guild = self.bot.get_guild(1053616489128808499)
+                role = guild.get_role(1091334417445834802)
+                member = guild.get_member(int(file_name))
+                await member.send("你的定存時間到了!")
+                await member.remove_roles(role,reason=f"{member.name} 因時間到而移除了 {role.name} 定存身分組！")
+                data.pop(0)
+                with open(file_path, 'w') as f:
+                    json.dump(data, f)
+        except (IndexError,UnboundLocalError):
+            pass
+
+        if not self.user_file_paths:
+            self.check_date.stop()
+        else:
+            print(f"Not yet time. Current time: {now}")
+
+    @check_date.before_loop
+    async def before(self):
+        await self.bot.wait_until_ready()
     
     @commands.Cog.listener(name="on_message_interaction")
     async def on_message_interaction(self, interaction: MessageInteraction):
@@ -67,35 +104,9 @@ class Bank(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
+        if not self.check_date.is_running():
+            self.bot.loop.create_task(self.check_date.start())
         print("Bank Ready!")
-
-    Mode = commands.option_enum({"開發模式":"dev","一般模式":"normal"})
-    @commands.slash_command(name="change",description="切換開發/正式模式")
-    async def change_mode(self, interaction: ApplicationCommandInteraction,mode:Mode):
-        if interaction.user.id == 549056425943629825:
-            try:
-                if Mode.current_mode == "normal":
-                    Mode.current_mode = "developer"
-                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-                    await self.bot.change_presence(activity=Game(name="正在開發模式中..可能無法使用一些服務"),status=Status.dnd)
-                else:
-                    Mode.current_mode = "normal"
-                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-                    await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
-            except AttributeError:
-                Mode.init("normal")
-                if Mode.current_mode == "normal":
-                    Mode.current_mode = "developer"
-                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-                    await self.bot.change_presence(activity=Game(name="正在開發模式中..可能無法使用一些服務"),status=Status.dnd)
-                else:
-                    Mode.current_mode = "normal"
-                    await interaction.response.send_message(f"已切換至 {Mode.current_mode} 模式")
-                    await self.bot.change_presence(activity=Game(name="管理NN銀行的大小事中.."))
-        else:
-            embed = disnake.Embed(title="❌ | 你無權執行此指令!",colour=disnake.Colour.red())
-            await interaction.response.send_message(embed=embed,ephemeral=True)
-        
 
     @commands.slash_command(name=Localized(data={Locale.zh_TW: "產生合約"}), description="透過此指令來一鍵定存!")
     async def contract(self, interaction: ApplicationCommandInteraction, money:int = Param(name=Localized(data={Locale.zh_TW: "金額"}),description=Localized(data={Locale.zh_TW: "定存的金額"}))):
@@ -110,10 +121,7 @@ class Bank(commands.Cog):
             with open(f"./database/{interaction.user.id}.json","w",encoding="utf-8'") as f:
                 json.dump(deposits,f)
             global message, orinigal_user, admin_message
-            if Mode.current_mode == "normal":
-                channel = self.bot.get_channel(1089209730360160306)
-            else:
-                channel = self.bot.get_channel(1053616489128808502)
+            channel = self.bot.get_channel(1089209730360160306)
             date_time_str, message, orinigal_user = await generate(bot=self.bot,interaction=interaction,money=money)
             admin_embed = Embed(title="<:emoji_107:1067077063246368799> | 定存通知!",description=f"{interaction.user.name} 想要定存!\n金額:`{money}$`\n到期日: {date_time_str}",colour=disnake.Colour.random())
             admin_embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
