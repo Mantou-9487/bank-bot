@@ -97,7 +97,8 @@ async def generate(bot:Bot,interaction:ApplicationCommandInteraction, money:int)
                 channel = bot.get_channel(1004300287282004039)
                 embed = disnake.Embed(title="✅ | 已產生成功!",description=f"已發送，︀請先至{channel.mention}支付存入金額給NN#3093，︀並等待銀行方確認。 | 你的定存次數目前為:`{len(deposits)}`筆!",colour=disnake.Colour.green())
                 embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
-                await interaction.response.send_message(embed=embed,ephemeral=True)
+                await interaction.response.defer(ephemeral=True)
+                await interaction.followup.send(embed=embed,ephemeral=True)
                 full_date_time = Date_required
                 date_time_str = full_date_time.strftime("%Y-%m-%d")
                 return date_time_str,message,interaction.user
@@ -124,10 +125,12 @@ async def generate(bot:Bot,interaction:ApplicationCommandInteraction, money:int)
             except RuntimeError:
                 session = aiohttp.ClientSession()
                 webhook = Webhook.from_url('https://discord.com/api/webhooks/1089207116612513843/z  o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R', session=session)
+                message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
             channel = bot.get_channel(1004300287282004039)
             embed = disnake.Embed(title="✅ | 已產生成功!",description=f"已發送，︀請先至{channel.mention}支付存入金額給NN#3093，︀並等待銀行方確認。 | 你的定存次數目前為:`{len(deposits)}`筆!",colour=disnake.Colour.green())
             embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
-            await interaction.response.send_message(embed=embed,ephemeral=True)
+            await interaction.response.defer(ephemeral=True)
+            await interaction.followup.send(embed=embed,ephemeral=True)
             full_date_time = Date_required
             date_time_str = full_date_time.strftime("%Y-%m-%d")
             return date_time_str
