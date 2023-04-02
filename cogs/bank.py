@@ -83,8 +83,10 @@ class Bank(commands.Cog):
             case "agree":
                 if role in interaction.user.roles or interaction.user.id == 549056425943629825:
                     temp_money_list = [int(item['temp_money']) for item in deposits if 'temp_money' in item]
-                    user,money,date_time = await write(user=orinigal_user,money=temp_money_list[0])
-                    embed = Embed(title="✅ | 執行成功!",description=f"已將 {user.name} 的定存紀錄寫入至資料庫",colour=disnake.Colour.green())
+                    temp_date_list = [item['temp_date'] for item in deposits if 'temp_date' in item]
+                    user,money,date_time = await write(user=orinigal_user,money=temp_money_list[0],date=temp_date_list[0])
+                    embed = Embed(title="<a:check:1043896950484902009> | 交易成功!",description=f"已將 {user.name} 的定存紀錄寫入至資料庫!",colour=disnake.Colour.green())
+                    embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
                     await admin_message.edit(embed=embed,view=None)
                     async with aiohttp.ClientSession() as session:
                         #https://discord.com/api/webhooks/1089207116612513843/o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R
@@ -95,7 +97,8 @@ class Bank(commands.Cog):
                         else:
                             contract_edit_text = f"[存款條] 本人 {user.mention} 於NN銀行存入yeecord幣 {int(money)}$, 依協調定存一日利息10$, {date_time}可領取原存入全額與相應利息, 若本人要求早於{date_time}\n領出, 只可領取原存入金額之一半, 利息悉數取消。\n本人簽名 :{user.name} \n銀行方簽名: <:castle_draw:994489310176882738>"
                         await original.edit(content=contract_edit_text)
-
+                    await asyncio.sleep(3)
+                    await admin_message.delete()
             case "deny":
                 if role in interaction.user.roles:
                     embed = Embed(title="❌ | 已拒絕定存",description=f"",colour=disnake.Colour.red())
@@ -116,13 +119,13 @@ class Bank(commands.Cog):
                     deposits = json.load(f)
             except json.decoder.JSONDecodeError:
                     deposits = []
-            temp_data = {"temp_money":money}
+            global message, orinigal_user, admin_message
+            channel = self.bot.get_channel(1004299585444917248)
+            date_time_str, message, orinigal_user = await generate(bot=self.bot,interaction=interaction,money=money)
+            temp_data = {"temp_money":money,"temp_date":date_time_str}
             deposits.append(temp_data)
             with open(f"./database/{interaction.user.id}.json","w",encoding="utf-8'") as f:
                 json.dump(deposits,f)
-            global message, orinigal_user, admin_message
-            channel = self.bot.get_channel(1089209730360160306)
-            date_time_str, message, orinigal_user = await generate(bot=self.bot,interaction=interaction,money=money)
             admin_embed = Embed(title="<:emoji_107:1067077063246368799> | 定存通知!",description=f"{interaction.user.name} 想要定存!\n金額:`{money}$`\n到期日: {date_time_str}",colour=disnake.Colour.random())
             admin_embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
             view = Menu()
