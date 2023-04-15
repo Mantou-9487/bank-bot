@@ -15,12 +15,6 @@ from disnake import ApplicationCommandInteraction,Localized,Locale,Member,Option
 from core.functions import generate,search,remove,write
 from typing import Optional
 
-locale.setlocale(locale.LC_TIME, 'zh_TW.UTF-8')
-
-class Mode:
-    def __init__(self):
-        self.current_mode = "normal"
-
 
 
 class Menu(disnake.ui.View):
@@ -57,8 +51,13 @@ class Bank(commands.Cog):
                 guild = self.bot.get_guild(1053616489128808499)
                 role = guild.get_role(1091334417445834802)
                 member = guild.get_member(int(file_name))
-                await member.send("你的定存時間到了!")
+                print(f"{member.name} 的定存時間到了!")
+                boss = guild.get_member(597106331324907520)
+                embed = Embed(title="來自銀行的通知!",description=f"你的定存時間到了! 已自動移除你的身份組搂",colour=Colour.red())
+                await member.send(embed=embed)
                 await member.remove_roles(role,reason=f"{member.name} 因時間到而移除了 {role.name} 定存身分組！")
+                boss_embed = Embed(title="來自銀行的通知!",description=f"{member.name} 因定存時間到了而被拔掉了身分組!",colour=Colour.random())
+                await boss.send(embed=boss_embed) #給老大的訊息
                 data.pop(0)
                 with open(file_path, 'w') as f:
                     json.dump(data, f)
@@ -68,7 +67,7 @@ class Bank(commands.Cog):
         if not self.user_file_paths:
             self.check_date.stop()
         else:
-            print(f"Not yet time. Current time: {now}")
+            print(f"還不是時候. 目前時間為: {now}")
 
     @check_date.before_loop
     async def before(self):
@@ -86,6 +85,9 @@ class Bank(commands.Cog):
                     temp_date_list = [item['temp_date'] for item in deposits if 'temp_date' in item]
                     user,money,date_time = await write(user=orinigal_user,money=temp_money_list[0],date=temp_date_list[0])
                     embed = Embed(title="<a:check:1043896950484902009> | 交易成功!",description=f"已將 {user.name} 的定存紀錄寫入至資料庫!",colour=disnake.Colour.green())
+                    guild = self.bot.get_guild(1053616489128808499)
+                    role = guild.get_role(1091334417445834802)
+                    await orinigal_user.add_roles(role)
                     embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
                     await admin_message.edit(embed=embed,view=None)
                     async with aiohttp.ClientSession() as session:
