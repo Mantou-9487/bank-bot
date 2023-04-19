@@ -86,14 +86,12 @@ async def generate(bot:Bot,interaction:ApplicationCommandInteraction, money:int)
                 date_time = Date_required    
                 contract_text = f"[存款條] 本人 {interaction.user.mention} 於NN銀行存入yeecord幣 {int(money)}$, 依協調定存一日利息10$, {date_time}可領取原存入全額與相應利息, 若本人要求早於{date_time}\n領出, 只可領取原存入金額之一半, 利息悉數取消。\n本人簽名 :{interaction.user.name} \n銀行方簽名: "
                 async with aiohttp.ClientSession() as session:
-                    webhook = Webhook.from_url('https://discord.com/api/webhooks/1089207116612513843/o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R', session=session)
-                        #webhook = Webhook.from_url('https://discord.com/api/webhooks/1065564022386204782/DWaGphaPa3qaNCiCwh6jVU4atT75sDCaTzVJSkAnVsNOWoo1erdvv-Ke-iGLi16p74sm', session=session)
-                try:
-                    message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
-                except RuntimeError:
-                    session = aiohttp.ClientSession()
-                    webhook = Webhook.from_url('https://discord.com/api/webhooks/1089207116612513843/o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R', session=session)
-                    message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                    try:
+                        webhook = Webhook.from_url('https://discord.com/api/webhooks/1097144035501678602/yBEZvY8305auz7FJz9oARu08tfi-BAmpig7j7NFZauDPJHr7IQcJrjlXR6LNR3GulEkY', session=session)
+                        message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                    except RuntimeError:
+                        session.close()
+                        raise
                 channel = bot.get_channel(1004300287282004039)
                 embed = disnake.Embed(title="✅ | 已產生成功!",description=f"已發送，︀請先至{channel.mention}支付存入金額給NN#3093，︀並等待銀行方確認。 | 你的定存次數目前為:`{len(deposits)}`筆!",colour=disnake.Colour.green())
                 embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
@@ -118,14 +116,12 @@ async def generate(bot:Bot,interaction:ApplicationCommandInteraction, money:int)
             date_time = Date_required    
             contract_text = f"[存款條] 本人 {interaction.user.mention} 於NN銀行存入yeecord幣 {int(money)}$, 依協調定存一日利息10$, {date_time}可領取原存入全額與相應利息, 若本人要求早於{date_time}\n領出, 只可領取原存入金額之一半, 利息悉數取消。\n本人簽名 :{interaction.user.name} \n銀行方簽名: "
             async with aiohttp.ClientSession() as session:
-                webhook = Webhook.from_url('https://discord.com/api/webhooks/1089207116612513843/o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R', session=session)
-                #webhook = Webhook.from_url('https://discord.com/api/webhooks/1065564022386204782/DWaGphaPa3qaNCiCwh6jVU4atT75sDCaTzVJSkAnVsNOWoo1erdvv-Ke-iGLi16p74sm', session=session)
-            try:
-                message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
-            except RuntimeError:
-                session = aiohttp.ClientSession()
-                webhook = Webhook.from_url('https://discord.com/api/webhooks/1089207116612513843/z  o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R', session=session)
-                message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                try:
+                    webhook = Webhook.from_url('https://discord.com/api/webhooks/1097144035501678602/yBEZvY8305auz7FJz9oARu08tfi-BAmpig7j7NFZauDPJHr7IQcJrjlXR6LNR3GulEkY', session=session)
+                    message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                except RuntimeError:
+                    session.close()
+                    raise
             channel = bot.get_channel(1004300287282004039)
             embed = disnake.Embed(title="✅ | 已產生成功!",description=f"已發送，︀請先至{channel.mention}支付存入金額給NN#3093，︀並等待銀行方確認。 | 你的定存次數目前為:`{len(deposits)}`筆!",colour=disnake.Colour.green())
             embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
