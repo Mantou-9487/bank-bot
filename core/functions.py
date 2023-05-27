@@ -5,11 +5,13 @@ import aiohttp
 import asyncio
 
 import time
-from disnake import ApplicationCommandInteraction,Embed,Member,User,MessageInteraction
+from disnake import ApplicationCommandInteraction,Embed,Member,User,MessageInteraction,ButtonStyle,MessageInteraction
 from disnake.ext import commands,tasks
+from disnake.ui import Button
 from disnake.ext.commands import Bot
 from datetime import timedelta, date,datetime
 from disnake import Webhook
+from typing import List
          
 
 async def search(interaction:ApplicationCommandInteraction,member:Member):
@@ -51,21 +53,33 @@ async def remove(interaction:ApplicationCommandInteraction,member:Member, order)
         await interaction.response.send_message(embed=embed,ephemeral=True)
 
 
-async def write(user:User,money:int,date:str):
+async def generate_messages(bot:Bot, user:disnake.User, data:list):
     try:
         with open(f"./database/{user.id}.json","r",encoding="utf-8'") as f:
             deposits = json.load(f)
     except json.decoder.JSONDecodeError:
             deposits = []
-    date_time_str = date
-    deposit_data = {"name": user.name, "money":money, "time": date_time_str}
-    deposits.append(deposit_data)
-    deposits.remove({"temp_money":money,"temp_date":date_time_str})
-    with open(f"./database/{user.id}.json","w",encoding="utf-8'") as f:
-            json.dump(deposits,f)
-
-    return user, money, date_time_str
-     
+    for item in enumerate(data):
+        buttons = [
+            Button(
+                style=ButtonStyle.green,
+                label="同意",
+                custom_id=f"view_{deposits[-1]['message_id']}_{deposits[-1]['index']}_agree",
+            ),
+            Button(
+                style=ButtonStyle.red,
+                label="拒絕",
+                custom_id=f"view_{deposits[-1]['message_id']}_{deposits[-1]['index']}_deny",
+            )
+        ]
+        channel = bot.get_channel(int(os.getenv("CHANNEL_ID")))
+        money = deposits[-1]['temp_money']
+        date_time_str = deposits[-1]['temp_date']
+        admin_embed = Embed(title="<:emoji_107:1067077063246368799> | 定存通知!",description=f"{user.name} 想要定存!\n金額:`{money}$`\n到期日: {date_time_str}",colour=disnake.Colour.random())
+        admin_embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
+        message = await channel.send(embed=admin_embed, components=buttons)
+        yield message
+        
 
 async def generate(bot:Bot,interaction:ApplicationCommandInteraction, money:int):
     if os.path.isfile(f"./database/{interaction.user.id}.json"):
@@ -87,19 +101,26 @@ async def generate(bot:Bot,interaction:ApplicationCommandInteraction, money:int)
                 contract_text = f"[存款條] 本人 {interaction.user.mention} 於NN銀行存入yeecord幣 {int(money)}$, 依協調定存一日利息10$, {date_time}可領取原存入全額與相應利息, 若本人要求早於{date_time}\n領出, 只可領取原存入金額之一半, 利息悉數取消。\n本人簽名 :{interaction.user.name} \n銀行方簽名: "
                 async with aiohttp.ClientSession() as session:
                     try:
-                        webhook = Webhook.from_url('https://discord.com/api/webhooks/1097144035501678602/yBEZvY8305auz7FJz9oARu08tfi-BAmpig7j7NFZauDPJHr7IQcJrjlXR6LNR3GulEkY', session=session)
-                        message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                        webhook = Webhook.from_url(os.getenv("WEBHOOK_URL"), session=session)
+                        try:
+                            message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                        except disnake.NotFound:
+                            channel = interaction.guild.get_channel(int(os.getenv("CHANNEL_ID")))
+                            channel_webhook = await channel.create_webhook(name="bank",avatar=None, reason=None)
+                            print(channel_webhook.url)
+                            webhook = Webhook.from_url(channel_webhook.url, session=session)
+                            message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
                     except RuntimeError:
                         session.close()
                         raise
-                channel = bot.get_channel(1004300287282004039)
-                embed = disnake.Embed(title="✅ | 已產生成功!",description=f"已發送，︀請先至{channel.mention}支付存入金額給NN#3093，︀並等待銀行方確認。 | 你的定存次數目前為:`{len(deposits)}`筆!",colour=disnake.Colour.green())
+                channel = bot.get_channel(int(os.getenv("CHANNEL_ID")))
+                embed = disnake.Embed(title="✅ | 已產生成功!",description=f"已發送，︀請先至 {channel.mention}支付存入金額給NN#3093，︀並等待銀行方確認。 | 你的定存次數目前為:`{len(deposits)}`筆!",colour=disnake.Colour.green())
                 embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
                 await interaction.response.defer(ephemeral=True)
                 await interaction.followup.send(embed=embed,ephemeral=True)
                 full_date_time = Date_required
                 date_time_str = full_date_time.strftime("%Y-%m-%d")
-                return date_time_str,message,interaction.user
+                return date_time_str,message, interaction.user, len(deposits)
     else:
         with open(f"./database/{interaction.user.id}.json","w+",encoding="utf-8'") as f:
             try:
@@ -117,16 +138,22 @@ async def generate(bot:Bot,interaction:ApplicationCommandInteraction, money:int)
             contract_text = f"[存款條] 本人 {interaction.user.mention} 於NN銀行存入yeecord幣 {int(money)}$, 依協調定存一日利息10$, {date_time}可領取原存入全額與相應利息, 若本人要求早於{date_time}\n領出, 只可領取原存入金額之一半, 利息悉數取消。\n本人簽名 :{interaction.user.name} \n銀行方簽名: "
             async with aiohttp.ClientSession() as session:
                 try:
-                    webhook = Webhook.from_url('https://discord.com/api/webhooks/1097144035501678602/yBEZvY8305auz7FJz9oARu08tfi-BAmpig7j7NFZauDPJHr7IQcJrjlXR6LNR3GulEkY', session=session)
-                    message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                    webhook = Webhook.from_url(os.getenv("WEBHOOK_URL"), session=session)
+                    try:
+                        message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
+                    except disnake.NotFound:
+                        channel = interaction.guild.get_channel(int(os.getenv("CHANNEL_ID")))
+                        channel_webhook = await channel.create_webhook(name="bank",avatar=None, reason=None)
+                        webhook = Webhook.from_url(channel_webhook.url, session=session)
+                        message = await webhook.send(f'{contract_text}', username=f'{interaction.user.display_name}',avatar_url=f"{interaction.user.display_avatar.url}",wait=True)
                 except RuntimeError:
                     session.close()
                     raise
-            channel = bot.get_channel(1004300287282004039)
+            channel = bot.get_channel(int(os.getenv("CHANNEL_ID")))
             embed = disnake.Embed(title="✅ | 已產生成功!",description=f"已發送，︀請先至{channel.mention}支付存入金額給NN#3093，︀並等待銀行方確認。 | 你的定存次數目前為:`{len(deposits)}`筆!",colour=disnake.Colour.green())
             embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
             await interaction.response.defer(ephemeral=True)
             await interaction.followup.send(embed=embed,ephemeral=True)
             full_date_time = Date_required
             date_time_str = full_date_time.strftime("%Y-%m-%d")
-            return date_time_str
+            return channel_webhook, date_time_str
