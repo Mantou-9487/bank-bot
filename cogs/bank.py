@@ -108,7 +108,6 @@ class Bank(commands.Cog):
                     await orinigal_user.add_roles(role)
                     embed.set_footer(text="Made by 鰻頭",icon_url="https://cdn.discordapp.com/avatars/549056425943629825/21fb28bb033154120ef885e116934aab.png?size=1024")
                     async with aiohttp.ClientSession() as session:
-                                #https://discord.com/api/webhooks/1089207116612513843/o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R
                         webhook = Webhook.from_url(os.getenv("WEBHOOK_URL"), session=session)
                         print(item["message_id"])
                         original = await webhook.fetch_message(item["message_id"])
@@ -134,7 +133,6 @@ class Bank(commands.Cog):
                 if role in interaction.user.roles or interaction.user.id == 549056425943629825:
                     embed = Embed(title="❌ | 已拒絕定存",description=f"",colour=disnake.Colour.red())
                     async with aiohttp.ClientSession() as session:
-                            #https://discord.com/api/webhooks/1089207116612513843/o_AB92mdds4IA3soqpcyu5S63dJcpy_vAZ26j57UV_wuj4yWhKgks8uUO24Tv10Qid-R
                         webhook = Webhook.from_url(os.getenv("WEBHOOK_URL"), session=session)
                         messageid_list = [item['message_id'] for item in deposits if 'message_id' in item]
                         temp_item = next((item for item in deposits if item["index"] == index), None)
